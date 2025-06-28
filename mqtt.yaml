@@ -1,0 +1,8 @@
+sensor:
+  # Battery percentage
+  - state_topic: "192.168.1.190:1883/N/48e7da8975b9/system/0/Batteries"
+    name: "Battery Percent"
+    unique_id: "battery_percent"
+    device_class: battery
+    value_template: '{{ value_json.value[0].soc | round(0) }}'
+    unit_of_measurement: "%"

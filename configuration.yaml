@@ -1,0 +1,341 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Shell command for Victron logging
+shell_command:
+  log_victron: >
+    /config/log_victron.sh {{ solar }} {{ import }} {{ load }} {{ battery }} {{ solar_now }} {{ import_now }} {{ load_now }} {{ battery_charge }} {{ battery_discharge }} {{ cell_diff }} {{ immersion_upper }} {{ immersion_lower }} {{ battery_voltage }} {{ dvcc_max_current }}
+  
+# Victron Configuration - MODBUS sensors for stats from Venus device
+modbus:
+  - name: victron
+    type: tcp
+    host: 192.168.1.190
+    port: 502
+    sensors:
+      # === BATTERY SENSORS ===
+      - name: "Battery Power"
+        unit_of_measurement: W
+        slave: 100
+        address: 842
+
+      - name: "Battery SOC"
+        unit_of_measurement: "%"
+        scale: 1
+        precision: 0
+        slave: 100
+        address: 843
+
+      - name: "Battery Voltage"
+        unit_of_measurement: "V"
+        scale: 0.1
+        precision: 1
+        slave: 100
+        address: 840
+
+      - name: "Battery Current"
+        unit_of_measurement: "A"
+        scale: 0.1
+        precision: 1
+        slave: 100
+        address: 841
+
+      - name: "Battery State"
+        scale: 1
+        precision: 1
+        slave: 100
+        address: 844
+
+      - name: "Minimum Cell Voltage"
+        unit_of_measurement: "V"
+        scale: 0.01
+        precision: 3
+        slave: 225
+        address: 1290
+
+      - name: "Maximum Cell Voltage"
+        unit_of_measurement: "V"
+        scale: 0.01
+        precision: 3
+        slave: 225
+        address: 1291
+
+      - name: "Battery Consumed Amphours"
+        unit_of_measurement: "Ah"
+        scale: -10
+        precision: 1
+        slave: 100
+        address: 845
+
+      - name: "Battery Time to Go"
+        unit_of_measurement: "s"
+        scale: 0.01
+        precision: 1
+        slave: 100
+        address: 846
+
+      # === POWER SENSORS ===
+      - name: "AC Loads"
+        unit_of_measurement: "W"
+        scale: 1
+        precision: 0
+        slave: 100
+        address: 817
+
+      - name: "Grid Power"
+        unit_of_measurement: "W"
+        slave: 100
+        address: 820
+        device_class: power
+        scale: 1
+        precision: 0
+        # Positive = Import, Negative = Export
+
+      - name: "Active input source"
+        unit_of_measurement: "W"
+        scale: 1
+        precision: 1
+        slave: 100
+        address: 826
+
+      # === SYSTEM STATUS ===
+      # Grid lost alarm and VE.Bus state sensors commented out due to errors
+      # - name: "Grid lost alarm"
+      #   scale: 1
+      #   precision: 1
+      #   slave: 242
+      #   address: 64
+
+      # - name: "VE.Bus state"
+      #   scale: 1
+      #   precision: 1
+      #   slave: 242
+      #   address: 31
+
+      # === TEMPERATURE SENSORS ===
+      - name: "Battery Temperature 1"
+        scale: 1
+        precision: 1
+        slave: 242
+        address: 61
+
+      - name: "Immersion Tank Temperature Upper"
+        unit_of_measurement: "C"
+        scale: 0.01
+        precision: 1
+        slave: 24
+        address: 3304
+
+      - name: "Immersion Tank Temperature Lower"
+        unit_of_measurement: "C"
+        scale: 0.01
+        precision: 1
+        slave: 25
+        address: 3304
+
+      # === DVCC SENSOR ===
+      - name: "DVCC Max Charge Current"
+        unit_of_measurement: "A"
+        scale: 1
+        precision: 0
+        slave: 100
+        address: 2705
+        device_class: current
+        state_class: measurement
+        scan_interval: 30
+
+      # === SOLAR SENSORS ===
+      # Solar Charge State commented out due to errors
+      # - name: "Solar Charge State"
+      #   scale: 1
+      #   precision: 1
+      #   slave: 243
+      #   address: 775
+
+      - name: "PV Voltage"
+        unit_of_measurement: "V"
+        scale: 0.01
+        slave: 243
+        address: 776
+
+      - name: "PV Power"
+        unit_of_measurement: "W"
+        scale: 1
+        precision: 0
+        slave: 100
+        address: 850
+
+      - name: "PV-S"
+        unit_of_measurement: kWh
+        scale: 0.1
+        precision: 2
+        slave: 215
+        address: 784
+        
+      - name: "PV-W"
+        unit_of_measurement: kWh
+        scale: 0.1
+        precision: 2
+        slave: 223
+        address: 784
+      
+      - name: "PV-E"
+        unit_of_measurement: kWh
+        scale: 0.1
+        precision: 2
+        slave: 224
+        address: 784
+        
+      # Maximum Charge Power Today commented out due to errors
+      # - name: "Maximum Charge Power Today"
+      #   unit_of_measurement: "kWh"
+      #   scale: 1
+      #   precision: 1
+      #   slave: 243
+      #   address: 785
+        
+      - name: "Yield Yesterday"
+        unit_of_measurement: "kWh"
+        scale: 10
+        precision: 1
+        slave: 243
+        address: 786
+
+      - name: "Battery Temperature 2"
+        scale: 10
+        precision: 1
+        slave: 243
+        address: 773
+
+###############################################################
+#                                                             #
+#   Additional Sensors                                        #
+#                                                             #
+###############################################################
+
+# Template sensors
+template:
+  - sensor:
+      # === EXISTING CELL VOLTAGE CALCULATIONS ===
+      - name: "Cell Voltage Difference"
+        unit_of_measurement: "mV"
+        state: >
+          {% set max_v = states('sensor.maximum_cell_voltage') | float %}
+          {% set min_v = states('sensor.minimum_cell_voltage') | float %}
+          {% if max_v > 0 and min_v > 0 %}
+            {{ ((max_v - min_v) * 1000) | round(0) }}
+          {% else %}
+            {{ states('sensor.cell_voltage_difference') }}
+          {% endif %}
+      
+      # Cell Voltage Difference mV commented out - references unavailable sensor
+      # - name: "Cell Voltage Difference mV"
+      #   unit_of_measurement: "mV"
+      #   state: "{{ (states('sensor.jk_pb2a16s15p_jkbms01_cell_volt_delta') | float(0) * 1000) | round(0) }}"
+        
+      - name: "PV Total"
+        unit_of_measurement: "kWh"
+        state: >
+          {% set pv_e = states('sensor.pv_e') | float(0) %}
+          {% set pv_s = states('sensor.pv_s') | float(0) %}
+          {% set pv_w = states('sensor.pv_w') | float(0) %}
+          {{ (pv_e + pv_s + pv_w) | round(3) }}
+      
+      # === POWER SPLIT SENSORS FOR LOGGING ===
+      - name: "Victron Import Power Now"
+        unit_of_measurement: "W"
+        device_class: power
+        state: >
+          {% set grid = states('sensor.grid_power') | float(0) %}
+          {% if grid > 0 %}
+            {{ grid | round(0) }}
+          {% else %}
+            0
+          {% endif %}
+          
+      - name: "Victron Battery Charge Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: >
+          {% set battery = states('sensor.battery_power') | float(0) %}
+          {% if battery > 0 %}
+            {{ battery | round(0) }}
+          {% else %}
+            0
+          {% endif %}
+          
+      - name: "Victron Battery Discharge Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: >
+          {% set battery = states('sensor.battery_power') | float(0) %}
+          {% if battery < 0 %}
+            {{ (battery * -1) | round(0) }}
+          {% else %}
+            0
+          {% endif %}
+
+# Legacy sensor platform configuration
+sensor:
+  # Tank sensors
+  - platform: modbus
+    sensors:
+      - name: "Tank Capacity"
+        slave: 22
+        address: 3001
+        scale: 0.0001
+        precision: 1
+        unit_of_measurement: "L"
+
+      - name: "Tank Level"
+        slave: 22
+        address: 3004
+        scale: 0.0001
+        precision: 1
+        unit_of_measurement: "%"
+  
+  # Energy integration sensors for daily totals
+  - platform: integration
+    source: sensor.ac_loads
+    name: "Victron Load Energy Hourly"
+    unit_prefix: k
+    unit_time: h
+    method: left
+
+  - platform: integration  
+    source: sensor.victron_import_power_now
+    name: "Victron Import Energy Hourly"
+    unit_prefix: k
+    unit_time: h
+    method: left
+
+# Utility meters for daily totals
+utility_meter:
+  victron_load_today:
+    source: sensor.victron_load_energy_hourly
+    name: "Victron Load Today"
+    cycle: daily
+    
+  victron_import_today:
+    source: sensor.victron_import_energy_hourly
+    name: "Victron Import Today"
+    cycle: daily
+
+###############################################################
+#                                                             #
+#   Lovelace Configuration                                    #
+#                                                             #
+###############################################################
+lovelace:
+  mode: yaml
+  resources:
+    - url: /hacsfiles/layout-card/layout-card.js
+      type: module

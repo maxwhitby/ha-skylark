@@ -1,0 +1,72 @@
+# Sensitive and private files
+secrets.yaml
+secrets.yml
+ip_bans.yaml
+known_devices.yaml
+*.db
+*.db-*
+*.log
+*.log.*
+home-assistant.log
+home-assistant.log.*
+OZW_Log.txt
+
+# Storage directory (contains sensitive data)
+.storage/
+.cloud/
+
+# Temporary files
+*.pid
+*.xml
+*.backup
+*.gz
+*.tmp
+__pycache__/
+*.pyc
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Custom component data
+custom_components/*/test*
+custom_components/*/__pycache__/
+
+# Node-RED
+node-red/
+
+# ESPHome
+esphome/secrets.yaml
+esphome/**/src/main.cpp
+
+# Specific integration credentials
+.spotify-token-cache
+.ring_cache.pickle
+.google.token
+
+# Zigbee database
+zigbee.db
+zigbee2mqtt/
+
+# Z-Wave
+options.xml
+OZW_Log.txt
+pyozw.sqlite
+
+# TTS cache
+tts/
+
+# Media files (optional - uncomment if you don't want to track)
+# www/media/
+# media/
+
+# Backup files
+backups/
+*.tar

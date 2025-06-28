@@ -1,0 +1,77 @@
+- id: '1720086460060'
+  alias: Victron MQTT KeepAlive
+  description: ''
+  trigger:
+  - platform: time_pattern
+    seconds: /30
+  condition: []
+  action:
+  - service: mqtt.publish
+    data:
+      qos: 0
+      retain: false
+      topic: victron/R/48e7da8975b9/system/0/Serial
+  mode: single
+
+- id: '1720207947464'
+  alias: Set Dimmer based on Battery SOC
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: sensor.battery_soc
+  action:
+  - service: light.turn_on
+    target:
+      entity_id: light.shellyplus010v_cc7b5c870630_light_0
+    data:
+      brightness: '{{ (states(''sensor.battery_soc'') | float * 2.55) | round }}'
+  mode: single
+
+- id: '1734266858786'
+  alias: Turn Off Battery Charger 2 When > 56.0V
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id:
+    - sensor.battery_voltage
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 1
+    above: 55
+  condition: []
+  action:
+  - type: turn_off
+    device_id: d018bb2546ed6c031b3ff13bc3931ebb
+    entity_id: af5b43d7d5356781d9c9bd9201d1f77e
+    domain: switch
+  mode: single
+  
+- id: '1734567890123'
+  alias: "Log Victron Values"
+  trigger:
+  - platform: time_pattern
+    seconds: "/30"
+  condition:
+  - condition: template
+    value_template: >
+      {{ states('sensor.battery_soc') not in ['unavailable', 'unknown'] }}
+  action:
+  - service: shell_command.log_victron
+    data:
+      solar: "{{ states('sensor.pv_total') | float(0) | round(1) }}"
+      import: "{{ states('sensor.victron_import_today') | float(0) | round(1) }}"
+      load: "{{ states('sensor.victron_load_today') | float(0) | round(1) }}"
+      battery: "{{ states('sensor.battery_soc') | float(0) | round(0) }}"
+      solar_now: "{{ states('sensor.pv_power') | float(0) | round(0) }}"
+      import_now: "{{ states('sensor.victron_import_power_now') | float(0) | round(0) }}"
+      load_now: "{{ states('sensor.ac_loads') | float(0) | round(0) }}"
+      battery_charge: "{{ states('sensor.victron_battery_charge_power') | float(0) | round(0) }}"
+      battery_discharge: "{{ states('sensor.victron_battery_discharge_power') | float(0) | round(0) }}"
+      cell_diff: "{{ states('sensor.cell_voltage_difference') | float(0) | round(0) }}"  # NEW
+      immersion_upper: "{{ states('sensor.immersion_tank_temperature_upper') | float(0) | round(1) }}"
+      immersion_lower: "{{ states('sensor.immersion_tank_temperature_lower') | float(0) | round(1) }}"
+      battery_voltage: "{{ states('sensor.battery_voltage') | float(0) | round(1) }}"
+      dvcc_max_current: "{{ states('sensor.dvcc_max_charge_current') | float(0) | round(0) }}"
+  mode: single
+  
