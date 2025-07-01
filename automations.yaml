@@ -74,4 +74,25 @@
       battery_voltage: "{{ states('sensor.battery_voltage') | float(0) | round(1) }}"
       dvcc_max_current: "{{ states('sensor.dvcc_max_charge_current') | float(0) | round(0) }}"
   mode: single
+
+- id: 'sync_dvcc_input_number'
+  alias: "Sync DVCC Input Number with Actual Value"
+  description: "Keep input_number in sync with actual DVCC value from Victron"
+  trigger:
+    - platform: state
+      entity_id: sensor.dvcc_max_charge_current
+      to: ~
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: template
+      value_template: >
+        {{ states('sensor.dvcc_max_charge_current') not in ['unavailable', 'unknown', 'None'] 
+           and states('sensor.dvcc_max_charge_current') | float(-1) >= 0 }}
+  action:
+    - service: input_number.set_value
+      data:
+        entity_id: input_number.dvcc_max_charge_current
+        value: "{{ states('sensor.dvcc_max_charge_current') | float(0) }}"
+  mode: single
   

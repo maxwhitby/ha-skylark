@@ -9,6 +9,16 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
+# Input Numbers
+input_number:
+  dvcc_max_charge_current:
+    name: "DVCC Max Charge Current"
+    min: 0
+    max: 50
+    step: 1
+    unit_of_measurement: "A"
+    icon: mdi:current-dc
+
 # Shell command for Victron logging
 shell_command:
   log_victron: >
@@ -150,7 +160,7 @@ modbus:
         address: 2705
         device_class: current
         state_class: measurement
-        scan_interval: 30
+        scan_interval: 10
 
       # === SOLAR SENSORS ===
       # Solar Charge State commented out due to errors
@@ -336,6 +346,14 @@ utility_meter:
 ###############################################################
 lovelace:
   mode: yaml
+  dashboards:
+    lovelace-ui:
+      mode: yaml
+      filename: ui-lovelace.yaml
+      title: Main Dashboard
+      icon: mdi:view-dashboard
+      show_in_sidebar: true
+      require_admin: false
   resources:
     - url: /hacsfiles/layout-card/layout-card.js
       type: module

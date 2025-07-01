@@ -1,0 +1,14 @@
+set_dvcc_max_current:
+  alias: "Set DVCC Max Charge Current"
+  sequence:
+    - action: modbus.write_register
+      data:
+        hub: victron
+        unit: 100
+        address: 2705
+        value: "{{ states('input_number.dvcc_max_charge_current') | int }}"
+    - delay:
+        seconds: 2
+    - action: homeassistant.update_entity
+      data:
+        entity_id: sensor.dvcc_max_charge_current
