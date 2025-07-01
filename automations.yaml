@@ -104,7 +104,14 @@
       entity_id: sensor.battery_soc
     - platform: homeassistant
       event: start
+    - platform: state
+      entity_id: input_boolean.soc_automation_enabled
+      from: 'off'
+      to: 'on'
   condition:
+    - condition: state
+      entity_id: input_boolean.soc_automation_enabled
+      state: 'on'
     - condition: template
       value_template: >
         {{ states('sensor.battery_soc') not in ['unavailable', 'unknown', 'None'] 

@@ -19,6 +19,12 @@ input_number:
     unit_of_measurement: "A"
     icon: mdi:current-dc
 
+# Input Booleans
+input_boolean:
+  soc_automation_enabled:
+    name: "SOC Based Charging Automation"
+    icon: mdi:battery-charging-wireless
+
 # Shell command for Victron logging
 shell_command:
   log_victron: >
@@ -234,6 +240,31 @@ modbus:
 # Template sensors
 template:
   - sensor:
+      # === SOC AUTOMATION STATUS ===
+      - name: "SOC Charging Tier"
+        state: >
+          {% set soc = states('sensor.battery_soc') | float(0) %}
+          {% if soc >= 99 %}
+            Charging Stopped (SOC ≥ 99%)
+          {% elif soc >= 95 %}
+            Trickle Charge - 10A (SOC ≥ 95%)
+          {% elif soc >= 90 %}
+            Moderate Charge - 30A (SOC ≥ 90%)
+          {% else %}
+            Full Charge - 50A (SOC < 90%)
+          {% endif %}
+        icon: >
+          {% set soc = states('sensor.battery_soc') | float(0) %}
+          {% if soc >= 99 %}
+            mdi:battery
+          {% elif soc >= 95 %}
+            mdi:battery-charging-90
+          {% elif soc >= 90 %}
+            mdi:battery-charging-60
+          {% else %}
+            mdi:battery-charging
+          {% endif %}
+
       # === EXISTING CELL VOLTAGE CALCULATIONS ===
       - name: "Cell Voltage Difference"
         unit_of_measurement: "mV"
