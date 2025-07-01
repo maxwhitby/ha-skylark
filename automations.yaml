@@ -95,4 +95,37 @@
         entity_id: input_number.dvcc_max_charge_current
         value: "{{ states('sensor.dvcc_max_charge_current') | float(0) }}"
   mode: single
+
+- id: 'auto_adjust_dvcc_by_soc'
+  alias: "Auto Adjust DVCC Max Current by Battery SOC"
+  description: "Automatically adjust DVCC max charge current based on battery SOC levels"
+  trigger:
+    - platform: state
+      entity_id: sensor.battery_soc
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: template
+      value_template: >
+        {{ states('sensor.battery_soc') not in ['unavailable', 'unknown', 'None'] 
+           and states('sensor.battery_soc') | float(-1) >= 0 }}
+  action:
+    - service: input_number.set_value
+      data:
+        entity_id: input_number.dvcc_max_charge_current
+        value: >
+          {% set soc = states('sensor.battery_soc') | float(0) %}
+          {% if soc >= 99 %}
+            0
+          {% elif soc >= 95 %}
+            10
+          {% elif soc >= 90 %}
+            30
+          {% else %}
+            50
+          {% endif %}
+    - delay:
+        milliseconds: 500
+    - service: script.set_dvcc_max_current
+  mode: single
   
